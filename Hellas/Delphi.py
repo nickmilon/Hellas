@@ -8,6 +8,9 @@ is a famous city in Greece where Oracle of Delphi was located
 '''
 from __future__ import print_function
 from __future__ import unicode_literals
+import logging
+from logging.handlers import TimedRotatingFileHandler
+import time
 from Hellas.Sparta import DotDot
 
 
@@ -61,11 +64,6 @@ class Color(object):
     @classmethod
     def color_switch_print(cls, color):
         print (cls.color_switch_txt(color))
-
-
-import logging
-from logging.handlers import TimedRotatingFileHandler
-import time
 
 
 class ColoredFormatter(logging.Formatter):
@@ -133,3 +131,34 @@ def double_logger(
         hs.setFormatter(formatterC)
         logger.addHandler(hs)
     return logger
+
+
+def auto_retry(exception_t, retries=3, sleepSeconds=1, BackOfFactor=1, loggerFun=None):
+    """ Args:
+            exception_t:exception or tuple of exceptions
+            retries: max retries
+            sleepSeconds base sleep seconds between retries
+            BackOfFactor actor to back off on each retry
+            loggerFun i.e. logger.info
+    """
+    def wrapper(func):
+        def fun_call(*args, **kwargs):
+            tries = 0
+            while tries < retries:
+                try:
+                    return func(*args, **kwargs)
+                except exception_t as e:
+                    tries += 1
+                    if loggerFun:
+                        loggerFun("exception [%s] e=[%s] handled tries :%d sleeping[%f]" %
+                                  (exception_t, e, tries, sleepSeconds * tries * BackOfFactor))
+                    time.sleep(sleepSeconds * tries * BackOfFactor)
+            raise
+        return fun_call
+    return wrapper
+
+
+
+
+
+

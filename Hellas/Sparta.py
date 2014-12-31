@@ -14,7 +14,13 @@ FMT_HTTP_DATE = "%a, %d %b %Y %H:%M:%S GMT"
 FMT_RFC_2822_DATE_FMT = "%a, %d %b %Y %H:%M:%S +0000"
 FMT_DT_GENERIC = "%y%m%d %H:%M:%S"        # generic date time format
 FMT_T_GENERIC = "%H:%M:%S"                # generic date format
-FMT_DT_COMPRESSED = "%y%m%d%H%M%S%f%V%u"  # compressed date+time+miliseconds+weekday+weeknumber
+FMT_DT_COMPR = "%y%m%d%H%M%S%f%V%u"       # compressed date+time+miliseconds+weekday+weeknumber
+FMT_DT_COMPR_SI = "%y%m%d%H%M%S%V%u"      # compressed date+time+weekday+weeknumber
+FMT_DT_COMPR_S = "%y%m%d%H%M%S"           # compressed up to seconds
+FMT_DT_COMPR_M = "%y%m%d%H%M"             # compressed up to minute
+FMT_DT_COMPR_H = "%y%m%d%H"               # compressed up to Hour
+
+
 # other formats
 FMT_INT_SEP = "{:,}"                      # integer with comma separator every 3 digits
 
@@ -51,11 +57,15 @@ class DotDot(dict):
             print ((k, v))
 
     def __getattr__(self, attr):
-        item = self[attr]
+        try:
+            item = self[attr]
+        except KeyError as e:
+            raise AttributeError(e)    # expected Error by pickle on __getstate__ etc
         if isinstance(item, dict) and not isinstance(item, DotDot):
             item = DotDot(item)
         return item
-
+    # def __getstate__(self): return self.__dict__
+    # def __setstate__(self, d): self.__dict__.update(d)
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
