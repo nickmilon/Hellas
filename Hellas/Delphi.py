@@ -12,6 +12,10 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 import time
 from Hellas.Sparta import DotDot
+try:
+    import simplejson as anyjson
+except ImportError as e:
+    import json as anyjson
 
 
 class Color(object):
@@ -158,7 +162,13 @@ def auto_retry(exception_t, retries=3, sleepSeconds=1, BackOfFactor=1, loggerFun
     return wrapper
 
 
-
-
-
-
+def pp_obj(obj, indent=4, sort_keys=False, prn=True, default=None):
+    '''obj must one of a (list tuple or dict)
+    '''
+    assert isinstance(obj, (list, tuple, dict))
+    rt = anyjson.dumps(obj, sort_keys=sort_keys, indent=indent,
+                       separators=(',', ': '), default=default, namedtuple_as_object=False)
+    if prn:
+        print(rt)
+    else:
+        return rt
