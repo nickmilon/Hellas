@@ -1,4 +1,0 @@
-Hellas
-======
-
-Basic python utilities 

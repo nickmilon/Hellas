@@ -1,32 +1,30 @@
-'''
-Created on Dec 4, 2014
+"""This module contains some pickle and compress code snippets named after the city of 
+`Olympia <https://en.wikipedia.org/wiki/Olympia,_Greece>`_ where first Olympic games were held
+"""
 
-@author: nickmilon
-'''
 import zlib
 import cPickle as pickle
 
 
 def pickle_compress(obj, print_compression_info=False):
-    """ pickle and compress
-    """
+    """pickle and compress an object"""
     p = pickle.dumps(obj)
     c = zlib.compress(p)
     if print_compression_info:
-        print "len = {:,d} compr={:,d} ratio:{:.6f}".format(len(p), len(c), float(len(c))/len(p))
+        print ("len = {:,d} compr={:,d} ratio:{:.6f}".format(len(p), len(c), float(len(c))/len(p)))
     return c
 
 
 def pickle_decompress(obj):
-    """ decompress  pickle_compress object
-    """
+    """ decompress  a pickle_compress object"""
     return pickle.loads(zlib.decompress(obj))
 
 
-def pickle_compress_test(obj):
-    cm = pickle_compress(obj, True)
+def pickle_compress_test(obj, print_compression_ratio=True):
+    """verifies id an object is pickable and can be compressed"""
+    cm = pickle_compress(obj, print_compression_ratio)
     dc = pickle_decompress(cm)
-    assert (dc == obj)
+    return True if dc == obj else False
 
 
 def pickle_compress_str(obj, print_compression_info=False):
@@ -36,5 +34,7 @@ def pickle_compress_str(obj, print_compression_info=False):
 
 def pickle_decompress_str(obj):
     """ decompress pickle_compressed as str
+
+    .. Warning:: it uses 'eval' use it carefully
     """
     return eval(pickle_decompress_str(obj))

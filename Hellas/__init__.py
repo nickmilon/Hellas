@@ -1,5 +1,6 @@
-__version__ = "0.1.1"
-__author__ = "nickmilon"
+__version__ = '1.0.4'
+__author__ = '@nickmilon'
+
 
 from sys import version_info
 

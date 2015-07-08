@@ -1,11 +1,8 @@
-'''
-Created on Nov 19, 2009
+"""This module contains classes and functions useful for pretty/color printing to console or logs
+it is named after `Delphi <http://en.wikipedia.org/wiki/Delphi>`_ the famous city where
+ancient `Oracle of Delphi <https://en.wikipedia.org/wiki/Pythia>`_ was located.
+"""
 
-Delphi ( http://en.wikipedia.org/wiki/Delphi )
-is a famous city in Greece where Oracle of Delphi was located
-
-@author: nickmilon
-'''
 from __future__ import print_function
 from __future__ import unicode_literals
 import logging
@@ -19,12 +16,14 @@ except ImportError as e:
 
 
 class Color(object):
-    """ This will NOT work on windows unless import colorama colorama.init()
-        some basic color handling for printing in color
-        br=bright _dk=dark
-        usage:>>> cl = Color()
-              >>> cl.printc("this is green", cl.colors.green)
-              >>> cl.print ("this is red, "red")
+    """some basic color handling for printing in color
+
+    .. Warning:: This class will **NOT** work in windows OS unless complemented by
+        library `colorama <https://pypi.python.org/pypi/colorama>`_
+
+    :Example:
+        >>> cl = Color()
+        >>> cl.printc("this is red", "red")
     """
     colors = DotDot({
         'black':    (0, 30),    'gray_br':   (0, 37),
@@ -40,13 +39,15 @@ class Color(object):
 
     @classmethod
     def help(cls):
+        """prints named colors"""
         print ("for named colors use :")
         for c in sorted(list(cls.colors.items())):
             print ("{:10} {}".format(*c))
 
     @classmethod
     def color_code(cls, color):
-        """ color is either a tuple as in colors.values or a string key to colors dictionary
+        """ returns code for color
+         :param tuple_or_code color: either a tuple as in colors.values or a string key to colors dictionary
         """
         if not isinstance(color, tuple):
             color = cls.colors[color]
@@ -71,6 +72,7 @@ class Color(object):
 
 
 class ColoredFormatter(logging.Formatter):
+    """a logging formatter for printing in colour"""
     color = Color()
     clr_name = color.colors
 
@@ -104,8 +106,9 @@ def double_logger(
         when='midnight',
         interval=1,
         backupCount=7):
-    """ a logger that logs to file as well as as screen
-        usage : logger=double_logger("log8",verbose=-1,filename="del3.log")
+    """a logger that logs to file as well as as screen
+
+    :Example: logger=double_logger("log8",verbose=-1,filename="del3.log")
     """
     logger = logging.getLogger(loggerName)
     logger.setLevel(min(levelConsol if levelConsol else 100, levelFile if levelFile else 100))
@@ -137,13 +140,14 @@ def double_logger(
     return logger
 
 
-def auto_retry(exception_t, retries=3, sleepSeconds=1, BackOfFactor=1, loggerFun=None):
-    """ Args:
-            exception_t:exception or tuple of exceptions
-            retries: max retries
-            sleepSeconds base sleep seconds between retries
-            BackOfFactor actor to back off on each retry
-            loggerFun i.e. logger.info
+def auto_retry(exception_t, retries=3, sleepSeconds=1, back_of_factor=1, logger_fun=None):
+    """a generic auto-retry function  @wrapper
+
+    :param Exception exception_t: exception (or tuple of exceptions) to auto retry
+    :param int retries: max retries before it raises the Exception (defaults to 3)
+    :param int_or_float sleepSeconds: base sleep seconds between retries (defaults to 1)
+    :param int back_of_factor: factor to back off on each retry (defaults to 1)
+    :param int logger_fun: loggerFun i.e. logger.info to log on each retry (defaults to None)
     """
     def wrapper(func):
         def fun_call(*args, **kwargs):
@@ -153,18 +157,18 @@ def auto_retry(exception_t, retries=3, sleepSeconds=1, BackOfFactor=1, loggerFun
                     return func(*args, **kwargs)
                 except exception_t as e:
                     tries += 1
-                    if loggerFun:
-                        loggerFun("exception [%s] e=[%s] handled tries :%d sleeping[%f]" %
-                                  (exception_t, e, tries, sleepSeconds * tries * BackOfFactor))
-                    time.sleep(sleepSeconds * tries * BackOfFactor)
+                    if logger_fun:
+                        logger_fun("exception [%s] e=[%s] handled tries :%d sleeping[%f]" %
+                                   (exception_t, e, tries, sleepSeconds * tries * back_of_factor))
+                    time.sleep(sleepSeconds * tries * back_of_factor)
             raise
         return fun_call
     return wrapper
 
 
 def pp_obj(obj, indent=4, sort_keys=False, prn=True, default=None):
-    '''obj must one of a (list tuple or dict)
-    '''
+    """pretty prints a (list tuple or dict) object
+    """
     assert isinstance(obj, (list, tuple, dict))
     rt = anyjson.dumps(obj, sort_keys=sort_keys, indent=indent,
                        separators=(',', ': '), default=default, namedtuple_as_object=False)

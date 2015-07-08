@@ -1,8 +1,6 @@
-'''
-Created on Nov 15, 2007
-
-@author: nickmilon
-'''
+"""mostly dict list and file related functions and classes named after
+the ancient city of `Pella <https://en.wikipedia.org/wiki/Pella>`_ 
+"""
 
 from copy import copy
 import signal
@@ -17,12 +15,14 @@ class ErrorFileTooBig(Error):
 
 # file operations -------------------------------------------------------------
 def file_to_base64(path_or_obj, max_mb=None):
-    """ converts contents of a file to base64 encoding
-        Args:path_or_obj fool pathname or a file like object that supports read
-            :max_mb maximum number in MegaBytes to accept
-        Raises:ErrorFileTooBig if file contents > max_bt
-               IOError: if file path can't be found
-               Also possible other exceptions depending on file_object
+    """converts contents of a file to base64 encoding
+
+    :param str_or_object path_or_obj: fool pathname string for a file or a file like object that supports read
+    :param int max_mb: maximum number in MegaBytes to accept
+    :param float lon2: longitude of second place (decimal degrees)
+
+    :raises ErrorFileTooBig: if file contents > max_mb (see :class:`ErrorFileTooBig`)
+    :raises IOError: if file path can't be found (Also possible other exceptions depending on file_object)
     """
     def read_file():
         with open(path_or_obj, 'rb') as fin:
@@ -39,30 +39,33 @@ def file_to_base64(path_or_obj, max_mb=None):
 
 
 # dictionary operations -------------------------------------------------------
-def dict_copy(a_dict, exclude_keys_lst=None, exclude_values_lst=None):
-    """ a SALLOW copy of a dict excluding items in exclude_keys_lst
-        and exclude_values_lst
-        useful for copying locals etc... remember it is NOT a deep copy
+def dict_copy(a_dict, exclude_keys_lst=[], exclude_values_lst=[]):
+    """a **SALLOW** copy of a dict that excludes items in exclude_keys_lst and exclude_values_lst
+    useful for copying locals() etc..
+
+    :param dict a_dict: dictionary to be copied
+    :param list exclude_keys_lst: a list or tuple of keys to exclude
+    :param list exclude_values_lst: a list or tuple of values to exclude
+
+    .. Warning:: remember it is NOT a deep copy
     """
-    if exclude_keys_lst is None:
-        exclude_keys_lst = list()
-    if exclude_values_lst is None:
-        exclude_values_lst = list()
     return dict([copy(i) for i in a_dict.items()
                  if i[0] not in exclude_keys_lst and i[1] not in exclude_values_lst])
 
 
-def dict_clip(a_dict, inlude_keys_lst):
+def dict_clip(a_dict, inlude_keys_lst=[]):
+    """returns a new dict with keys not in included in inlude_keys_lst clipped off"""
     return dict([[i[0], i[1]] for i in a_dict.items() if i[0] in inlude_keys_lst])
 
 
 # list operations -------------------------------------------------------------
 def list_randomize(lst):
-    "returns list in random order"
+    """returns list in random order"""
     return sorted(lst, key=lambda x: random())
 
 
 def list_pp(ll, separator='|', header_line=True, autonumber=True):
+    """pretty print list of lists ll"""
     if autonumber:
         for cnt, i in enumerate(ll):
             i.insert(0, cnt if cnt > 0 or not header_line else '#')
@@ -84,15 +87,28 @@ def list_pp(ll, separator='|', header_line=True, autonumber=True):
         print header_line
     return lst_len
 
+
 # signal -----------------------------------------------------------------------
 def signal_terminate(on_terminate):
-        for i in [signal.SIGINT, signal.SIGHUP, signal.SIGUSR1, signal.SIGUSR2, signal.SIGTERM]:
-            signal.signal(i, on_terminate)
+    """a common case program termination signal"""
+    for i in [signal.SIGINT, signal.SIGHUP, signal.SIGUSR1, signal.SIGUSR2, signal.SIGTERM]:
+        signal.signal(i, on_terminate)
 
 
 # classes -----------------------------------------------------------------------
 class Base62(object):
-    """unsigned integer coder codes to and from base 62
+    """unsigned integer coder class codes to and from base 62, useful for compressing integer values
+
+    .. Warning:: any encoded values can only be decoded by same class
+
+    :Example:
+        >>> b62 = Base62()
+        >>> vl = 2 ** 24
+        16777216
+        >>> b62.encode(vl)
+        '18OWG'
+        >>> b62.decode('18OWG')
+        16777216
     """
     symbols = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
     numeric_symbols = symbols[:10]
@@ -123,4 +139,4 @@ class Base62(object):
 
     @classmethod
     def decode(cls, number):
-        return cls._code(number, cls.symbols, cls.numeric_symbols)
+        return int(cls._code(number, cls.symbols, cls.numeric_symbols))

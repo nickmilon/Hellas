@@ -1,7 +1,6 @@
-'''**Defines very basic constants, classes and methods named after `Sparta  **
-we keep this module simple and laconic
-No imports in this module
-'''
+"""Defines very basic constants, classes and methods named after `Sparta <https://en.wikipedia.org/wiki/Sparta>`_ .
+We keep this module simple and  `Laconic <https://en.wikipedia.org/wiki/Laconic_phrase>`_   so No imports in this module
+"""
 
 # Date - Time formats
 FMT_HTTP_DATE = "%a, %d %b %Y %H:%M:%S GMT"
@@ -19,20 +18,24 @@ FMT_DHMS_DICT = "{days:03d}-{hours:02d}:{minutes:02d}:{seconds:02d}"
 FMT_INT_SEP = "{:,d}"                      # integer with comma separator every 3 digits
 
 
-def seconds_to_DHMS(seconds, asStr=True):
-    '''| seconds to Days, Hours, Minutes, Seconds
-       | useful to display program run time etc...
+def seconds_to_DHMS(seconds, as_str=True):
+    """converts seconds to Days, Hours, Minutes, Seconds
 
-    :Args: 
-      - seconds (int)
-        - AsStr (bool) if True returns a formated string else dictionary
-    '''
+    :param int seconds: number of seconds
+    :param bool as_string: to return a formated string defaults to True
+    :returns: a formated string if as_str else a dictionary
+    :Example:
+        >>> seconds_to_DHMS(60*60*24)
+        001-00:00:00
+        >>> seconds_to_DHMS(60*60*24, False)
+        {'hours': 0, 'seconds': 0, 'minutes': 0, 'days': 1}
+    """
     d = DotDot()
     d.days = int(seconds // (3600 * 24))
     d.hours = int((seconds // 3600) % 24)
     d.minutes = int((seconds // 60) % 60)
     d.seconds = int(seconds % 60)
-    return FMT_DHMS_DICT.format(**d) if asStr else d
+    return FMT_DHMS_DICT.format(**d) if as_str else d
 
 
 class Error(Exception):
@@ -40,15 +43,28 @@ class Error(Exception):
 
 
 class DotDot(dict):
-    '''A dictionary with dot notation
-        example dd=DotDot()
-        dd.a=1
-        dd.a ==>> 1
-    '''
-    def prnt(self):
-        for k, v in list(self.items()):
-            print ((k, v))
+    """
+    A dictionary that can handle dot notation to access its members (useful when parsing JSON content),
+    although it can perform write operations using dot notation on single level dictionary its mainly use is for reads
+    also to keep casting to it cheap it doesn't handle creating multilevel keys using dot notation.
+    For this functionality look for `easydict <https://github.com/makinacorpus/easydict>`_
+    or `addict <https://github.com/mewwts/addict>`_
 
+    :Example:
+        >>> dd = DotDot()
+        >>> dd.a = 1
+        >>> dd
+        {'a': 1}
+        >>> dd.b.c = 100
+        'AttributeError ...  '
+        >>> dd.b = {'b1': 21, 'b2': 22}
+        >>> dd.b.b3 = 23
+        >>> dd
+        {'a': 1, 'b': {'b1': 21, 'b2': 22}, 'b3': 23}
+
+    .. Warning:: don't use for write operations on a nested key using dot notation
+       i.e: `del dd.a.b` or  dd.a.b = 1  or dd.a.b +=1 **(it will fail silently !)**
+    """
     def __getattr__(self, attr):
         try:
             item = self[attr]
@@ -57,8 +73,6 @@ class DotDot(dict):
         if isinstance(item, dict) and not isinstance(item, DotDot):
             item = DotDot(item)
         return item
-    # def __getstate__(self): return self.__dict__
-    # def __setstate__(self, d): self.__dict__.update(d)
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
@@ -77,27 +91,44 @@ class DictDK(dict):
         super(DictDK, self).__init__([(self.key, val)])
 
 
+def dict_encode(in_dict):
+    """returns a new dictionary with encoded values useful for encoding http queries (python < 3)"""
+    out_dict = {}
+    for k, v in in_dict.iteritems():
+        if isinstance(v, unicode):
+            v = v.encode('utf8')
+        elif isinstance(v, str):
+            # Must be encoded in UTF-8
+            v.decode('utf8')
+        out_dict[k] = v
+    return out_dict
+
+
 class AdHocTree(object):
-    """ builds an arbitrary tree structure using object attributes
-        example:
-            aht= tps.AdHocTree().foo.bar
-            aht ==> <AdHocTree: bar/foo/root>
-        can be extended
-        newtree=aht.foo.new_foo
-        newtree ==>> <AdHocTree: new_foo/foo/bar/foo/root>
+    """builds an arbitrary tree structure using object attributes
+
+    :Usage:
+        >>> aht = AdHocTree().foo.bar
+        >>> aht
+        <AdHocTree: root/foo/bar>
+            - can be extended:
+        >>> newtree = newtree = aht.new_foo.new_bar
+        >>> newtree
+        <AdHocTree: root/foo/bar/new_foo/new_bar>
     """
-    _slots__ = ['parent', 'name']
+
+    __slots__ = ['parent', 'name']  # don't create __dict__ just those 2 slots
 
     def __init__(self, parent=None, name="root"):
-        """ Args:parent any object instance
-                :name (str) name of toplevel Node
+        """
+        :param obj parent: parent object, defaults to None
+        :param str name: name of the Tree, defaults to root
         """
         self.parent = parent
         self.name = name
 
     def __call__(self, *args, **kwargs):
-        """ calls _adHocCmd_ method on root's parent if exists
-        """
+        """calls _adHocCmd_ method on root's parent if exists"""
         elements = list(self)
         try:
             cmd = elements[-1].parent.__getattribute__('_adHocCmd_')
@@ -110,11 +141,11 @@ class AdHocTree(object):
         return AdHocTree(self, attr)
 
     def __reduce__(self):
-        """it is pickl-able"""
+        """its pickle-able"""
         return (self.__class__, (self.parent, self.name))
 
     def __iter__(self):
-        """ iterates breadth-first up to root """
+        """iterates breadth-first up to root"""
         curAttr = self
         while isinstance(curAttr, AdHocTree):
             yield curAttr
@@ -130,16 +161,46 @@ class AdHocTree(object):
         return '<{}: {}>'.format(self.__class__.__name__, self.path())
 
     def path(self, separator="/"):
+        """:returns: a string representing the path to root element separated by separator"""
         rt = ""
         for i in reversed(self):
-            rt = "%s%s%s" % (rt, i.name, separator)
+            rt = "{}{}{}".format(rt, i.name, separator)
         return rt[:-1]
 
     def root_and_path(self):
+        """:returns: a tuple (parent, [members,... ]"""
         rt = []
         curAttr = self
-        while isinstance(curAttr.parent, AdHocTree) or curAttr.parent is None:
+        while isinstance(curAttr.parent, AdHocTree):
+            print "attr", curAttr
             rt.append(curAttr.name)
             curAttr = curAttr.parent
         rt.reverse()
         return (curAttr.parent, rt)
+
+
+def relations_dict(rel_lst):
+    """constructs a relation's dictionary from a list that describes amphidromus relations between objects
+
+    :param list rel_lst: a relationships list of the form [[a,b],[c, a, b]]  # can include duplicates
+    :returns: a dictionary
+
+    :Example:
+        >>> rl = [('a', 'b', 'c'), ('a', 'x', 'y'), ('x', 'y', 'z')]
+        >>> relations_dict(rl)
+        {'a': ['x', 'c', 'b', 'y'], 'c': ['a', 'b'], 'b': ['a', 'c'], 'y': ['a', 'x', 'z'], 'x': ['a', 'z', 'y'],
+         'z': ['y', 'x']}
+    """
+    dc = {}
+    for c in rel_lst:
+        for i in c:
+            for k in c:
+                dc.setdefault(i, [])
+                dc[i].append(k)
+    do = {}
+    for k in dc.keys():
+        if dc[k]:
+            vl = list(set(dc[k]))   # remove duplicates
+            vl.remove(k)
+            do[k] = vl
+    return do
