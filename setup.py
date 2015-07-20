@@ -3,7 +3,7 @@ import os
 from setuptools import setup, find_packages
 
 cur_path = os.path.dirname(os.path.realpath(__file__))
-read_init = open(cur_path+'/twtPyCurl/__init__.py').read()
+read_init = open(cur_path+'/Hellas/__init__.py').read()
 
 __version__ = re.search("__version__\s*=\s*'(.*)'", read_init, re.M).group(1)
 __author__ = re.search("__author__\s*=\s*'(.*)'", read_init, re.M).group(1)
@@ -23,7 +23,7 @@ setup(
     # long_description=readme_content,
     download_url="https://github.com/nickmilon/Hellas/tarball/master",
     classifiers=[
-        "Development Status :: 5 - Production",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: MacOS :: MacOS X",

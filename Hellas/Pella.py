@@ -1,5 +1,5 @@
 """mostly dict list and file related functions and classes named after
-the ancient city of `Pella <https://en.wikipedia.org/wiki/Pella>`_ 
+the ancient city of `Pella <https://en.wikipedia.org/wiki/Pella>`_
 """
 
 from copy import copy
@@ -49,13 +49,13 @@ def dict_copy(a_dict, exclude_keys_lst=[], exclude_values_lst=[]):
 
     .. Warning:: remember it is NOT a deep copy
     """
-    return dict([copy(i) for i in a_dict.items()
+    return dict([copy(i) for i in list(a_dict.items())
                  if i[0] not in exclude_keys_lst and i[1] not in exclude_values_lst])
 
 
 def dict_clip(a_dict, inlude_keys_lst=[]):
     """returns a new dict with keys not in included in inlude_keys_lst clipped off"""
-    return dict([[i[0], i[1]] for i in a_dict.items() if i[0] in inlude_keys_lst])
+    return dict([[i[0], i[1]] for i in list(a_dict.items()) if i[0] in inlude_keys_lst])
 
 
 # list operations -------------------------------------------------------------
@@ -81,10 +81,10 @@ def list_pp(ll, separator='|', header_line=True, autonumber=True):
         header_line = '-' * len(frmt.format(*ll[0]))
     for cnt, l in enumerate(ll):
         if cnt < 2 and header_line:
-            print header_line
-        print frmt.format(*l)
+            print(header_line)
+        print(frmt.format(*l))
     if header_line:
-        print header_line
+        print(header_line)
     return lst_len
 
 

@@ -11,7 +11,8 @@ def ngrams(slice_able, n):
     :param obj slice_able: any slicable object i.e string list etc
     :param int n: n-th grams
 
-    :returns: a list of ngram tuples
+    :Returns: an iterator of ngram tuples 
+              (actually returns a list in Python 2.7) but always treat it as iterator for python 3+ compatibility)
 
     :Example:
         >>> ngrams("The quick brown fox jumps over the lazy dog", 2)
@@ -24,10 +25,13 @@ def ngrams(slice_able, n):
 
 def bigrams(slice_able):
     """produces bigrams same as ngrams (x, 2) but more efficient
+
+    :Returns: an iterator of bigram tuples
+              (actually returns a list in Python 2.7) but always treat it as iterator for python 3+ compatibility)
+
      .. seealso:: :func:`ngrams`
     """
     return zip(slice_able, slice_able[1:])
-
 
 def haversine(lon1, lat1, lon2, lat2):
     """Calculate the great circle distance between two points on earth in Kilometers
@@ -49,7 +53,7 @@ def haversine(lon1, lat1, lon2, lat2):
 
     """
     # convert decimal degrees to radians
-    lon1, lat1, lon2, lat2 = map(math.radians, [lon1, lat1, lon2, lat2])
+    lon1, lat1, lon2, lat2 = list(map(math.radians, [lon1, lat1, lon2, lat2]))
     # haversine formula
     dlon = lon2 - lon1
     dlat = lat2 - lat1

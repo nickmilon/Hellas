@@ -3,7 +3,7 @@
 """
 
 import zlib
-import cPickle as pickle
+import pickle
 
 
 def pickle_compress(obj, print_compression_info=False):

@@ -3,8 +3,10 @@ it is named after `Delphi <http://en.wikipedia.org/wiki/Delphi>`_ the famous cit
 ancient `Oracle of Delphi <https://en.wikipedia.org/wiki/Pythia>`_ was located.
 """
 
-from __future__ import print_function
-from __future__ import unicode_literals
+from Hellas import _IS_PY2
+if _IS_PY2:
+    from __future__ import print_function
+    from __future__ import unicode_literals
 import logging
 from logging.handlers import TimedRotatingFileHandler
 import time
@@ -40,9 +42,9 @@ class Color(object):
     @classmethod
     def help(cls):
         """prints named colors"""
-        print ("for named colors use :")
+        print("for named colors use :")
         for c in sorted(list(cls.colors.items())):
-            print ("{:10} {}".format(*c))
+            print("{:10} {}".format(*c))
 
     @classmethod
     def color_code(cls, color):
@@ -64,15 +66,15 @@ class Color(object):
     @classmethod
     def printc(cls, txt, color=colors.red):
         """Print in color."""
-        print (cls.color_txt(txt, color))
+        print(cls.color_txt(txt, color))
 
     @classmethod
     def color_switch_print(cls, color):
-        print (cls.color_switch_txt(color))
+        print(cls.color_switch_txt(color))
 
 
 class ColoredFormatter(logging.Formatter):
-    """a logging formatter for printing in colour"""
+    """a logging formatter for printing in color"""
     color = Color()
     clr_name = color.colors
 
@@ -130,7 +132,7 @@ def double_logger(
         hf.setLevel(levelFile)
         logger.addHandler(hf)
     if levelConsol:
-        frmtC = frmt.translate(dict((ord(c), u'') for c in u"'{},"))
+        frmtC = frmt.translate(dict((ord(c), '') for c in "'{},"))
         formatterC = ColoredFormatter(frmtC)
         formatterC.converter = time.gmtime
         hs = logging.StreamHandler()

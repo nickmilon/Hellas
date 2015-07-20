@@ -13,7 +13,7 @@ FMT_DT_COMPR_S = "%y%m%d%H%M%S"           # compressed up to seconds
 FMT_DT_COMPR_M = "%y%m%d%H%M"             # compressed up to minute
 FMT_DT_COMPR_H = "%y%m%d%H"               # compressed up to Hour
 FMT_DHMS_DICT = "{days:03d}-{hours:02d}:{minutes:02d}:{seconds:02d}"
-
+from Hellas import _IS_PY2
 # other formats
 FMT_INT_SEP = "{:,d}"                      # integer with comma separator every 3 digits
 
@@ -93,15 +93,18 @@ class DictDK(dict):
 
 def dict_encode(in_dict):
     """returns a new dictionary with encoded values useful for encoding http queries (python < 3)"""
-    out_dict = {}
-    for k, v in in_dict.iteritems():
-        if isinstance(v, unicode):
-            v = v.encode('utf8')
-        elif isinstance(v, str):
-            # Must be encoded in UTF-8
-            v.decode('utf8')
-        out_dict[k] = v
-    return out_dict
+    if _IS_PY2:
+        out_dict = {}
+        for k, v in list(in_dict.items()):
+            if isinstance(v, unicode):
+                v = v.encode('utf8')
+            elif isinstance(v, str):
+                # Must be encoded in UTF-8
+                v.decode('utf8')
+            out_dict[k] = v
+        return out_dict
+    else:
+        raise NotImplementedError
 
 
 class AdHocTree(object):
@@ -172,7 +175,6 @@ class AdHocTree(object):
         rt = []
         curAttr = self
         while isinstance(curAttr.parent, AdHocTree):
-            print "attr", curAttr
             rt.append(curAttr.name)
             curAttr = curAttr.parent
         rt.reverse()
@@ -198,7 +200,7 @@ def relations_dict(rel_lst):
                 dc.setdefault(i, [])
                 dc[i].append(k)
     do = {}
-    for k in dc.keys():
+    for k in list(dc.keys()):
         if dc[k]:
             vl = list(set(dc[k]))   # remove duplicates
             vl.remove(k)
