@@ -1,4 +1,4 @@
-"""This module contains some pickle and compress code snippets named after the city of 
+"""This module contains some pickle and compress code snippets named after the city of
 `Olympia <https://en.wikipedia.org/wiki/Olympia,_Greece>`_ where first Olympic games were held
 """
 

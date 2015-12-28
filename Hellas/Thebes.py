@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 """yet some more code snippets named after the ancient city of `Thebes <https://en.wikipedia.org/wiki/Thebes,_Greece>`_
 """
 
 import re
+from Hellas.Sparta import chunks_str
 
 
 def format_header(frmt):
@@ -34,3 +36,31 @@ def format_header(frmt):
     header_len = len(header)
     header = "{}\n{}\n{}\n".format("." * header_len, header, "." * header_len)
     return header.strip()
+
+
+def chunks_str_frame(a_str, n=None, center=True):
+    """places a frame around a string
+    :Parameters:
+        - a_str: string to frame
+        - n: number of chars in each line
+        - center: center string in frame if True and n > len(str)
+
+    :Example:
+        >>> print(chunks_str_frame('the quick brown fox', 44))
+        ╔════════════════════════════════════════════╗
+        ║            the quick brown fox             ║
+        ╚════════════════════════════════════════════╝
+        >>> print(chunks_str_frame('the quick brown fox',12, False))
+        ╔════════════╗
+        ║the quick br║
+        ║own fox     ║
+        ╚════════════╝
+    """
+    if n is None:
+        n = len(a_str)
+    elif n > len(a_str) and center is True:
+        a_str = a_str.center(n)
+    spcs = "" if n == 1 or n == len(a_str) else " " * (n - (len(a_str) % n))
+    n = len(a_str) if n is None else n
+    r = chunks_str(a_str, n, "║\n║")
+    return "╔{}╗\n║{}{}║\n╚{}╝".format('═' * n, r, spcs, '═' * n)

@@ -14,6 +14,15 @@ class ErrorFileTooBig(Error):
 
 
 # file operations -------------------------------------------------------------
+def read_file(path, mode='rb'):
+    """
+    :param path: fool pathname string for a file to read
+    :param mode: file open mode defaults to 'rb'
+    """
+    with open(path, 'rb') as fin:
+        return fin.read()
+
+
 def file_to_base64(path_or_obj, max_mb=None):
     """converts contents of a file to base64 encoding
 
@@ -24,11 +33,8 @@ def file_to_base64(path_or_obj, max_mb=None):
     :raises ErrorFileTooBig: if file contents > max_mb (see :class:`ErrorFileTooBig`)
     :raises IOError: if file path can't be found (Also possible other exceptions depending on file_object)
     """
-    def read_file():
-        with open(path_or_obj, 'rb') as fin:
-            return fin.read()
     if not hasattr(path_or_obj, 'read'):
-        rt = read_file()
+        rt = read_file(path_or_obj)
     else:
         rt = path_or_obj.read()
     if max_mb:
@@ -91,7 +97,7 @@ def list_pp(ll, separator='|', header_line=True, autonumber=True):
 # signal -----------------------------------------------------------------------
 def signal_terminate(on_terminate):
     """a common case program termination signal"""
-    for i in [signal.SIGINT, signal.SIGHUP, signal.SIGUSR1, signal.SIGUSR2, signal.SIGTERM]:
+    for i in [signal.SIGINT, signal.SIGQUIT, signal.SIGUSR1, signal.SIGUSR2, signal.SIGTERM]:
         signal.signal(i, on_terminate)
 
 
@@ -99,7 +105,7 @@ def signal_terminate(on_terminate):
 class Base62(object):
     """unsigned integer coder class codes to and from base 62, useful for compressing integer values
 
-    .. Warning:: any encoded values can only be decoded by same class
+    .. Warning:: any encoded values can only be decoded by this class
 
     :Example:
         >>> b62 = Base62()

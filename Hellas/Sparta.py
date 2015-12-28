@@ -8,6 +8,7 @@ FMT_RFC_2822_DATE_FMT = "%a, %d %b %Y %H:%M:%S +0000"
 FMT_DT_GENERIC = "%y%m%d %H:%M:%S"        # generic date time format
 FMT_T_GENERIC = "%H:%M:%S"                # generic date format
 FMT_DT_COMPR = "%y%m%d%H%M%S%f%V%u"       # compressed date+time+milliseconds + weekday + weeknumber
+FMT_DT_COMPR_SV = "%y%m%d%H%M%S%u"        # compressed date+time+weekday
 FMT_DT_COMPR_SI = "%y%m%d%H%M%S%V%u"      # compressed date+time+weekday + weeknumber
 FMT_DT_COMPR_S = "%y%m%d%H%M%S"           # compressed up to seconds
 FMT_DT_COMPR_M = "%y%m%d%H%M"             # compressed up to minute
@@ -36,6 +37,10 @@ def seconds_to_DHMS(seconds, as_str=True):
     d.minutes = int((seconds // 60) % 60)
     d.seconds = int(seconds % 60)
     return FMT_DHMS_DICT.format(**d) if as_str else d
+
+
+def elapsed_seconds(dt_start, dt_end):
+    return (dt_end - dt_start).total_seconds()
 
 
 class Error(Exception):
@@ -181,6 +186,80 @@ class AdHocTree(object):
         return (curAttr.parent, rt)
 
 
+class AdHocCmd(object):
+    __slots__ = ['_call_back', '_path']  # for efficiency don't create __dict__ just those 2 slots
+    """
+    a class for creating Ad hoc Commands using dot notation
+    :Usage: see :class:`~.AdHocCmdExample`
+    """
+    def __init__(self, call_back, path=""):
+        self._call_back = call_back
+        self._path = path
+
+    def __getitem__(self, path):
+        if self._path is not None:
+            path = '{}/{}'.format(self._path, path)
+        return AdHocCmd(self._call_back, path)
+
+    def __getattr__(self, path):
+        return self[path]
+
+    def __call__(self, *args, **kwargs):
+        """calls call_back function with path, args, kwargs override in descendants for any special handling"""
+        return self._call_back(self._path, *args, **kwargs)
+
+    def __repr__(self):
+        return '<AdHocCmd: {}>'.format(self._path)
+
+    def get_path(self):
+        return self._path
+
+
+class AdHocCmdExample(object):
+    """a class to demonstrate usage of AdHocCmd
+
+    .. Warning:: class **must be a new style class** (descents from object directly or indirectly)
+
+    >>> cmd =restm.AdHocCmdExample()
+    >>> cmd.method_native(999, foo='bar')
+        ('method_native', (999,), {'foo': 'bar'})
+    >>> cmd.foo1.foo2.foo3(1111, bar='foo')
+        ('_adhocmd_', 'foo1/foo2/foo3', (1111,), {'bar': 'foo'})
+    """
+    def method_native(self, *args, **kwargs):
+        """demonstrates we can call a native method defined in class"""
+        return ("method_native", args, kwargs)
+
+    def _adhocmd_(self, path, *args, **kwargs):
+        return ("_adhocmd_", path, args, kwargs)
+
+    def __getattr__(self, attr):
+        """delegate  __getattr__  method to an AdHocCmd instance with a call back method and attr"""
+        return AdHocCmd(self._adhocmd_, attr)
+
+
+class EnumLabels(object):
+    """A simple class for enumerating labels to values descendants are easily auto documented with sphinx
+
+    :Example:
+        >>> class EnumColors(EnumLabels):
+        >>>    RED = 1
+        >>>    GREEN = 2
+        >>> EnumColors.GREEN
+        2
+    """
+    @classmethod
+    def value_name(cls, value):
+        """
+        Returns the label from a value if label exists otherwise returns the value
+        since method does a reverse look up it is slow
+        """
+        for k, v in list(cls.__dict__.items()):
+            if v == value:
+                return k
+        return value
+
+
 def relations_dict(rel_lst):
     """constructs a relation's dictionary from a list that describes amphidromus relations between objects
 
@@ -206,3 +285,45 @@ def relations_dict(rel_lst):
             vl.remove(k)
             do[k] = vl
     return do
+
+
+def chunks(sliceable, n):
+    """
+    returns a list of lists of any slice-able object each of max lentgh n
+
+    :Parameters:
+        -sliceable: (string|list|tuple) any sliceable object
+        - n max elements of ech chunk
+    :Example:
+        >>> chunksn([1,2,3,4,5,6,7,8,9,'x'], 4)
+        [[1, 2, 3, 4], [5, 6, 7, 8], [9, 'x']]
+        >>> chunksn('123456789X', 3)
+        ['123', '456', '789', 'X']
+
+    """
+    return [sliceable[i:i+n] for i in range(0, len(sliceable), n)]
+
+
+def chunks_str(str, n, separator="\n", fill_blanks_last=True):
+    """returns lines with max n characters
+
+    :Example:
+        >>> print (chunks_str('123456X', 3))
+        123
+        456
+        X
+    """
+    return separator.join(chunks(str, n))
+
+
+def unicode_available():
+    """checks to see if unicode is available  basically distinguishes between python 2.x and 3.x"""
+    try:
+        unicode
+        return True
+    except NameError:
+        return False
+
+
+def unicode_or_str():
+    return unicode if unicode_available() else str

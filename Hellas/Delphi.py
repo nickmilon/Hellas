@@ -3,14 +3,13 @@ it is named after `Delphi <http://en.wikipedia.org/wiki/Delphi>`_ the famous cit
 ancient `Oracle of Delphi <https://en.wikipedia.org/wiki/Pythia>`_ was located.
 """
 
-from Hellas import _IS_PY2
-if _IS_PY2:
-    from __future__ import print_function
-    from __future__ import unicode_literals
+
+import sys
 import logging
-from logging.handlers import TimedRotatingFileHandler
+from logging import handlers  # in python 3 not in logging.handlers
 import time
-from Hellas.Sparta import DotDot
+from Hellas.Sparta import DotDot, seconds_to_DHMS
+from Hellas import _IS_PY2
 try:
     import simplejson as anyjson
 except ImportError as e:
@@ -61,6 +60,8 @@ class Color(object):
 
     @classmethod
     def color_txt(cls, txt="", color=None):
+        if _IS_PY2 and isinstance(txt, unicode):
+            txt = txt.encode("utf-8")
         return "{}{}\033[0m".format(cls.color_switch_txt(color), txt)
 
     @classmethod
@@ -74,71 +75,101 @@ class Color(object):
 
 
 class ColoredFormatter(logging.Formatter):
-    """a logging formatter for printing in color"""
-    color = Color()
-    clr_name = color.colors
+    """a logging formatter for printing in color works only in linux
+    on an non linux system it returns plain text
+    """
+    if sys.platform.startswith('linux'):
+        color = Color()
+        clr_name = color.colors
 
-    def format(self, record):
-        levelno = record.levelno
-        if(levelno >= 50):
-            clr = self.clr_name.red_br       # CRITICAL / FATAL
-        elif(levelno >= 40):
-            clr = self.clr_name.red          # ERROR
-        elif(levelno >= 30):
-            clr = self.clr_name.yellow       # WARNING
-        elif(levelno >= 20):
-            clr = self.clr_name.green        # INFO
-        elif(levelno >= 10):
-            clr = self.cls_name.purple_br    # DEBUG
-        else:
-            clr = self.cls_name.normal       # NOTSET etc
-        return self.color.color_txt(logging.Formatter.format(self, record), clr)
+        def format(self, record):
+            levelno = record.levelno
+            if(levelno >= 50):
+                clr = self.clr_name.red_br       # CRITICAL / FATAL
+            elif(levelno >= 40):
+                clr = self.clr_name.red          # ERROR
+            elif(levelno >= 30):
+                clr = self.clr_name.yellow       # WARNING
+            elif(levelno >= 20):
+                clr = self.clr_name.green        # INFO
+            elif(levelno >= 10):
+                clr = self.clr_name.purple_br    # DEBUG
+            else:
+                clr = self.cls_name.normal       # NOTSET etc
+            return self.color.color_txt(logging.Formatter.format(self, record), clr)
+    else:
+        def format(self, record):
+            return logging.Formatter.format(self, record)
 
 
-def double_logger(
-        # obsolete TODO remove it when drop support for python 2.x
-        # then we can use new style formating ({}) style='{'
-        # also see http://pythonhosted.org//logutils/
-        # and http://plumberjack.blogspot.gr/2010/10/supporting-alternative-formatting.html
-        loggerName="log",
-        levelConsol=logging.DEBUG,
-        levelFile=logging.DEBUG,
-        filename="~/log_"+__name__,
+def logging_format(verbose=2, style='txt'):
+    """returns a format
+    :parameter:
+        - str style: defines style of output format (defaults to txt)
+            - txt plain text
+            - dict like text which can be casted to dict
+    """
+    frmt = "'dt':'%(asctime)s', 'lv':'%(levelname)-7s', 'ln':'%(name)s'"
+
+    if verbose > 1:
+        frmt += ",\t'Func': '%(funcName)-12s','line':%(lineno)5d, 'module':'%(module)s'"
+    if verbose > 2:
+        frmt += ",\n\t'file':'%(filename)s',\t'Process':['%(processName)s', %(process)d], \
+                'thread':['%(threadName)s', %(thread)d], 'ms':%(relativeCreated)d"
+    frmt += ",\n\t'msg':'%(message)s'"
+    if style == "dict":
+        frmt = "{" + frmt + "}"
+        frmt = frmt.replace(" ", "").replace("\n", "").replace("\t", "")
+    if style == "txt":
+        frmt = frmt.replace("'", "").replace(",", "")
+    return frmt
+
+
+class LoggingColorHandler(logging.StreamHandler):
+    def __init__(self, level=logging.NOTSET, verbose=2):
+        super(LoggingColorHandler, self).__init__()
+        self.setLevel(level)
+        formatterC = ColoredFormatter(logging_format(verbose, 'str'))
+        formatterC.converter = time.gmtime
+        self.setFormatter(formatterC)
+
+
+def logger_multi(
+        loggerName="",  # top
+        level_consol=logging.DEBUG,
+        level_file=logging.DEBUG,
+        filename=None,
         verbose=1,
         when='midnight',
         interval=1,
         backupCount=7):
     """a logger that logs to file as well as as screen
+    see http://pythonhosted.org//logutils/ http://plumberjack.blogspot.gr/2010/10/supporting-alternative-formatting.html
 
-    :Example: logger=double_logger("log8",verbose=-1,filename="del3.log")
+    :Todo:
+      - use new style formating for python > v3 i.e formatter = logging.Formatter(frmt.replace(" ", ""), style='{')
+        #frmtC = frmt.translate(dict((ord(c), '') for c in "'{},"))
+
+    :Parameters: `see <https://docs.python.org/2/library/logging.html#module-logging>`_
+    :Example:
+        >>> LOG = logger_double('', level_consol=logging.DEBUG, level_file=logging.DEBUG, verbose=3, filename="~\f.log")
     """
     logger = logging.getLogger(loggerName)
-    logger.setLevel(min(levelConsol if levelConsol else 100, levelFile if levelFile else 100))
-    frmt = "{'dt':'%(asctime)s','ln':'%(name)s' ,'lv':'%(levelname)-8s','msg':'%(message)s'"
-    if verbose > 1:
-        frmt += "\n\t\t\t,'Func': '%(funcName)-10s','line':%(lineno)4d, \
-                'module':'%(module)s', 'file':'%(filename)s'"
-    if verbose > 2:
-        frmt += "\n\t\t\t,'Process':['%(processName)s', %(process)d], \
-                'thread':['%(threadName)s', %(thread)d], 'ms':%(relativeCreated)d"
-    frmt += "}"
-    if levelFile:
-        formatter = logging.Formatter(frmt.replace(" ", ""), style='{')
+    logger.setLevel(min(level_consol if level_consol else 100, level_file if level_file else 100))
+    # logger.disable_existing_loggers = False
+    if level_file:
+        if filename is None:
+            filename = "~\py.log"
+        formatter = logging.Formatter(logging_format(verbose, 'str'))
         formatter.converter = time.gmtime
-        hf = TimedRotatingFileHandler(
+        hf = handlers.TimedRotatingFileHandler(
             filename, when=when, interval=interval,
             backupCount=backupCount, encoding='utf-8', delay=False, utc=True)
         hf.setFormatter(formatter)
-        hf.setLevel(levelFile)
+        hf.setLevel(level_file)
         logger.addHandler(hf)
-    if levelConsol:
-        frmtC = frmt.translate(dict((ord(c), '') for c in "'{},"))
-        formatterC = ColoredFormatter(frmtC)
-        formatterC.converter = time.gmtime
-        hs = logging.StreamHandler()
-        hs.setLevel(levelConsol)
-        hs.setFormatter(formatterC)
-        logger.addHandler(hs)
+    if level_consol:
+        logger.addHandler(LoggingColorHandler(level=level_consol, verbose=verbose))
     return logger
 
 
@@ -168,13 +199,46 @@ def auto_retry(exception_t, retries=3, sleepSeconds=1, back_of_factor=1, logger_
     return wrapper
 
 
-def pp_obj(obj, indent=4, sort_keys=False, prn=True, default=None):
-    """pretty prints a (list tuple or dict) object
+def pp_obj(obj, out_path=None, indent=4, sort_keys=False, ensure_ascii=False, default=None):
     """
-    assert isinstance(obj, (list, tuple, dict))
-    rt = anyjson.dumps(obj, sort_keys=sort_keys, indent=indent,
+    pretty prints a (list tuple,  dict etc) object
+
+    :useful:
+        - when we want to avoid importing pprint if we have already imported json
+        - when we want to pprint to file without breaking json compatibility
+    """
+    rt = anyjson.dumps(obj, sort_keys=sort_keys, indent=indent, ensure_ascii=ensure_ascii,
                        separators=(',', ': '), default=default, namedtuple_as_object=False)
-    if prn:
-        print(rt)
-    else:
+    # unicode_available
+    if out_path is None:
         return rt
+    else:
+        with open(out_path, 'w') as out:
+            out.write(rt)
+
+
+def time_func(func):
+    """
+    time a function decorator
+    :param args: any args to pass to the function
+    :paran kwargs: any key arguments to pass to the function
+        (if 'operations' is in kwargs keys it is used to calculate operations per second)
+
+    """
+    def timed(*args, **kwargs):
+        ts = time.time()
+        result = func(*args, **kwargs)
+        secs = time.time() - ts
+        ops_ps = kwargs.get('operations', secs) / secs
+        print "finc{} took: {} {:2.4f} operations/sec={:5.2f}".format(func.__name__, seconds_to_DHMS(secs), secs, ops_ps)
+        return result
+    return timed
+
+
+@time_func
+def time_func_example(seconds=10, **kwargs):
+    """time a functiondecorator example"""
+    for i in range(1, seconds + 1):
+        time.sleep(1)
+    return i
+

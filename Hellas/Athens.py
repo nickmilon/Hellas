@@ -33,6 +33,7 @@ def bigrams(slice_able):
     """
     return zip(slice_able, slice_able[1:])
 
+
 def haversine(lon1, lat1, lon2, lat2):
     """Calculate the great circle distance between two points on earth in Kilometers
     on the earth (specified in decimal degrees)
