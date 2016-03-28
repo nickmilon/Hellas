@@ -4,6 +4,7 @@ the ancient city of `Pella <https://en.wikipedia.org/wiki/Pella>`_
 
 from copy import copy
 import signal
+import os
 from base64 import b64encode
 from random import random
 from Hellas.Sparta import Error
@@ -146,3 +147,13 @@ class Base62(object):
     @classmethod
     def decode(cls, number):
         return int(cls._code(number, cls.symbols, cls.numeric_symbols))
+
+
+def obj_id_expanded(obj=None, size=99):
+    """
+    :param obj (objectj): optional
+    :param size (int): optional size of id(obj) to include defaults to 99
+
+    :Returns: id: (str) an id that of the form machine-name|ppid|pid|id(obj)
+    """
+    return "{}|{}|{}{}".format(os.uname()[1], os.getppid(), os.getpid(), "" if obj is None else "|" + str(id(obj))[-size:])

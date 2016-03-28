@@ -8,12 +8,17 @@ import sys
 import logging
 from logging import handlers  # in python 3 not in logging.handlers
 import time
-from Hellas.Sparta import DotDot, seconds_to_DHMS
+from Hellas.Sparta import DotDot, seconds_to_DHMS, class_name_str
 from Hellas import _IS_PY2
 try:
     import simplejson as anyjson
 except ImportError as e:
     import json as anyjson
+
+auto_retry_msg_frmt = "auto-retry: class: {} e: {} tries:({:d} of {:d}), waitSecs: {:.2f}\n\tfunc: {}\n\targs:[{}]\n\tkwargs:[{}] msg:{}"
+
+LOG = logging.getLogger(__name__)
+LOG.addHandler(logging.NullHandler())  # Prevents No handlers found warning
 
 
 class Color(object):
@@ -173,14 +178,19 @@ def logger_multi(
     return logger
 
 
-def auto_retry(exception_t, retries=3, sleepSeconds=1, back_of_factor=1, logger_fun=None):
-    """a generic auto-retry function  @wrapper
+def auto_retry(exception_t, retries=3, sleepSeconds=1, back_of_factor=1, msg='', auto_log=1, raise_on_failure=True):
+    """a generic auto-retry function  @wrapper - decorator
 
     :param Exception exception_t: exception (or tuple of exceptions) to auto retry
     :param int retries: max retries before it raises the Exception (defaults to 3)
     :param int_or_float sleepSeconds: base sleep seconds between retries (defaults to 1)
     :param int back_of_factor: factor to back off on each retry (defaults to 1)
-    :param int logger_fun: loggerFun i.e. logger.info to log on each retry (defaults to None)
+    :param str msg: message to append to logs
+    :param int auto_log: (0 | 1 | 2) logs (exception) failures if > 0 logs (info) retries also if > 1
+    :param bool raise_on_failure: if True will re-raise exception when retries are exhausted (defaults to True)
+    :returns:
+        function result if successful (on first place or after retrying)
+        the *last* retry Exception if not successful, check not isinstance(result , Exception) to see if it managed to succeed
     """
     def wrapper(func):
         def fun_call(*args, **kwargs):
@@ -190,13 +200,26 @@ def auto_retry(exception_t, retries=3, sleepSeconds=1, back_of_factor=1, logger_
                     return func(*args, **kwargs)
                 except exception_t as e:
                     tries += 1
-                    if logger_fun:
-                        logger_fun("exception [%s] e=[%s] handled tries :%d sleeping[%f]" %
-                                   (exception_t, e, tries, sleepSeconds * tries * back_of_factor))
-                    time.sleep(sleepSeconds * tries * back_of_factor)
-            raise
+                    sleep_seconds = sleepSeconds * tries * back_of_factor
+                    if auto_log > 0:
+                        ermsg = auto_retry_msg_frmt.format(class_name_str(e, True), e, tries, retries, sleep_seconds, func.__name__, args, kwargs, msg)
+                    if tries < retries:
+                        if auto_log > 1:
+                            LOG.info(ermsg)
+                        time.sleep(sleep_seconds)
+                    else:
+                        if auto_log > 0:
+                            LOG.exception(ermsg)
+                        if raise_on_failure:
+                            raise
+                        return e
         return fun_call
     return wrapper
+
+
+@auto_retry((ZeroDivisionError),  msg='auto_retry_test', raise_on_failure=True)
+def auto_retry_test():
+    return 1 / 0
 
 
 def pp_obj(obj, out_path=None, indent=4, sort_keys=False, ensure_ascii=False, default=None):
@@ -241,4 +264,3 @@ def time_func_example(seconds=10, **kwargs):
     for i in range(1, seconds + 1):
         time.sleep(1)
     return i
-

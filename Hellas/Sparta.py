@@ -327,3 +327,13 @@ def unicode_available():
 
 def unicode_or_str():
     return unicode if unicode_available() else str
+
+
+def class_name_str(obj, skip_parent=False):
+    """
+    return's object's class name as string
+    """
+    rt = str(type(obj)).split(" ")[1][1:-2]
+    if skip_parent:
+        rt = rt.split(".")[-1]
+    return rt
