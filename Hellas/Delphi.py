@@ -264,3 +264,18 @@ def time_func_example(seconds=10, **kwargs):
     for i in range(1, seconds + 1):
         time.sleep(1)
     return i
+
+
+def visualise(seq, sort=lambda x: x[0]):
+    """visualises as seq or dictionary"""
+    frmt = "{:6} {:8,d} {}"
+    if isinstance(seq, dict):
+        seq = seq.items()
+    if sort:
+        seq = sorted(seq, key = sort)
+    mx, mn = max([i[1] for i in seq]), min([i[1] for i in seq])  
+    range = mx - mn
+    for i in seq:
+        v = int((i[1] * 100) / range)
+        print frmt.format(i[0], i[1], "*" * v)
+    

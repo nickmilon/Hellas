@@ -9,6 +9,7 @@ FMT_DT_GENERIC = "%y%m%d %H:%M:%S"        # generic date time format
 FMT_T_GENERIC = "%H:%M:%S"                # generic date format
 FMT_DT_COMPR = "%y%m%d%H%M%S%f%V%u"       # compressed date+time+milliseconds + weekday + weeknumber
 FMT_DT_COMPR_SV = "%y%m%d%H%M%S%u"        # compressed date+time+weekday
+FMT_DT_EXP_SV = "%y%-m%-d%:H%:M%-S%-u"    # expanded date+time+weekday
 FMT_DT_COMPR_SI = "%y%m%d%H%M%S%V%u"      # compressed date+time+weekday + weeknumber
 FMT_DT_COMPR_S = "%y%m%d%H%M%S"           # compressed up to seconds
 FMT_DT_COMPR_M = "%y%m%d%H%M"             # compressed up to minute
