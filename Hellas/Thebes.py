@@ -64,3 +64,48 @@ def chunks_str_frame(a_str, n=None, center=True):
     n = len(a_str) if n is None else n
     r = chunks_str(a_str, n, "║\n║")
     return "╔{}╗\n║{}{}║\n╚{}╝".format('═' * n, r, spcs, '═' * n)
+
+
+class MacAddress(object):
+    """ stores mac as int 
+    """
+    _mac_regx = re.compile(r'^([0-9A-F]{1,2})' + '\:([0-9A-F]{1,2})'*5 + '$', re.IGNORECASE)
+    # @todo move class to Hellas
+
+    def __init__(self, mac_str, validate=True):
+        if validate is False or self.mac_validate(mac_str) is not None:
+            self._mac = self.mac_to_int(mac_str)
+        else:
+            raise ValueError
+
+    def __int__(self):
+        return self._mac
+
+    def __str__(self):
+        return self.mac_expand(self.mac_from_int(self._mac), upper=False, lower=False)
+
+    @classmethod
+    def mac_validate(cls, mac_str):
+        return cls._mac_regx.match(mac_str)
+
+    @classmethod
+    def mac_compress(cls, mac, upper=True, lower=False):
+        mac = mac.replace(":", "")
+        return mac.upper() if upper else mac.lower() if lower else mac
+
+    @classmethod
+    def mac_expand(cls, mac, upper=True, lower=False):
+        """expands a compressed mac addres str ie (AC8674075628) to mac address (AC:86:74:07:56:28) also makes it lower/upper case"""
+        mac = ":".join(["".join(i) for i in zip(mac[::2], mac[1::2])])
+        return mac.upper() if upper else mac.lower() if lower else mac
+
+    @classmethod
+    def mac_to_int(cls, mac):
+        return int(cls.mac_compress(mac, upper=False, lower=False), 16)
+
+    @classmethod
+    def mac_from_int(cls, mac_int):
+        """returns a mac string from int  'c81ee716c167'
+           to make it proper mac string pass result to mac_expand
+        """
+        return hex(mac_int)[2:]
