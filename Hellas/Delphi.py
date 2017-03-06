@@ -253,7 +253,7 @@ def time_func(func):
         result = func(*args, **kwargs)
         secs = time.time() - ts
         ops_ps = kwargs.get('operations', secs) / secs
-        print "finc{} took: {} {:2.4f} operations/sec={:5.2f}".format(func.__name__, seconds_to_DHMS(secs), secs, ops_ps)
+        print ("finc{} took: {} {:2.4f} operations/sec={:5.2f}".format(func.__name__, seconds_to_DHMS(secs), secs, ops_ps))
         return result
     return timed
 
@@ -272,10 +272,10 @@ def visualise(seq, sort=lambda x: x[0]):
     if isinstance(seq, dict):
         seq = seq.items()
     if sort:
-        seq = sorted(seq, key = sort)
+        seq = sorted(seq, key=sort)
     mx, mn = max([i[1] for i in seq]), min([i[1] for i in seq])  
     range = mx - mn
     for i in seq:
         v = int((i[1] * 100) / range)
-        print frmt.format(i[0], i[1], "*" * v)
-    
+        print (frmt.format(i[0], i[1], "*" * v))
+
