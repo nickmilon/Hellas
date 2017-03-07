@@ -37,7 +37,7 @@ def format_header(frmt, return_len=False):
     header = header_frmt.format(*names)
     header_len = len(header)
     header = "{}\n{}\n{}\n".format("." * header_len, header, "." * header_len)
-    return header.strip(), header_len if return_len else header.strip()
+    return header.strip() if return_len is False else (header.strip(), header_len)
 
 
 def chunks_str_frame(a_str, n=None, center=True):
@@ -171,7 +171,9 @@ class Progress(object):
             print(chunks_str_frame(self.head_line, self.header_len - 2, center=True))
         print(self.header)
 
-    def print_end(self):
+    def print_end(self, extra_dict=None):
+        print('.' * self.header_len)
+        self.print_stats(extra_dict)
         print('.' * self.header_len)
 
     @classmethod
