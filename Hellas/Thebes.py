@@ -131,6 +131,7 @@ class Progress(object):
         self.reset(extra_dict)
         self.print_header()
         self.dt_start = datetime.now()
+        self.ended = False
 
     def progress(self, inc=1, extra_dict=None):
         self._dict.operations += inc
@@ -155,7 +156,7 @@ class Progress(object):
             perc = (self._dict.operations / float(self.max_count))
             self._dict.percent = 100 * perc
             self._dict.per_sec = 0 if self._dict.operations < 10 else int(self._dict.operations / (self.dt_last_print - self.dt_start).total_seconds())
-            self._dict.ETA = seconds_to_DHMS( (elapsed * (1 / perc)) - elapsed)
+            self._dict.ETA = seconds_to_DHMS((elapsed * (1 / perc)) - elapsed)
         print(self._frmt.format(**self._dict))
         if self._dict.operations == self.max_count:
                 self.print_end()
@@ -171,10 +172,13 @@ class Progress(object):
             print(chunks_str_frame(self.head_line, self.header_len - 2, center=True))
         print(self.header)
 
-    def print_end(self, extra_dict=None):
-        print('.' * self.header_len)
-        self.print_stats(extra_dict)
-        print('.' * self.header_len)
+    def print_end(self, extra_dict=None, override_ended=False):
+        if (not self.ended) or override_ended:
+            self.ended = True
+            print('.' * self.header_len)
+            self.print_stats(extra_dict)
+            print('.' * self.header_len)
+
 
     @classmethod
     def test(cls, every_seconds=2, every_mod=None):
