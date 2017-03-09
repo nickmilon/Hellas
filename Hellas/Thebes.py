@@ -131,7 +131,7 @@ class Progress(object):
         self.reset(extra_dict)
         self.print_header()
         self.dt_start = datetime.now()
-        self.ended = False
+        self.state = 0  # 0  no print yet, 1 some print occured, 2 have been on print_end
 
     def progress(self, inc=1, extra_dict=None):
         self._dict.operations += inc
@@ -141,7 +141,13 @@ class Progress(object):
                 return
         elif (datetime.now() - self.dt_last_print).total_seconds() > self.every_seconds:
             self.print_stats(extra_dict)
+            return
         elif self.max_count is not None and self._dict.operations == self.max_count:
+            self.print_stats(extra_dict)
+            self.print_end(extra_dict)
+            return
+        elif self.state == 0:
+            self.state = 1
             self.print_stats(extra_dict)
 
     def print_stats(self, extra_dict):
@@ -152,7 +158,7 @@ class Progress(object):
             self._dict.update(extra_dict)
         elapsed = (self.dt_last_print - self.dt_start).total_seconds()
         self._dict.run_time = seconds_to_DHMS(elapsed)
-        if self.max_count is not None:
+        if self.max_count:                          # we don't check just for None to avoid div by 0 if max_count is 0
             perc = (self._dict.operations / float(self.max_count))
             self._dict.percent = 100 * perc
             self._dict.per_sec = 0 if self._dict.operations < 10 else int(self._dict.operations / (self.dt_last_print - self.dt_start).total_seconds())
@@ -163,7 +169,7 @@ class Progress(object):
 
     def reset(self, extra_dict={}):
         self._dict = DotDot({'cnt': 0, 'date_time': datetime.now().strftime(FMT_DT_GENERIC),
-                             'operations': 0, 'per_sec': 0.0, 'percent': 0.0, 'run_time': '', 'ETA': ''})
+                             'operations': 0, 'per_sec': 0, 'percent': 0.0, 'run_time': '', 'ETA': ''})
         self._dict.update(extra_dict)
         self.dt_last_print = datetime.now()
 
@@ -173,8 +179,8 @@ class Progress(object):
         print(self.header)
 
     def print_end(self, extra_dict=None, override_ended=False):
-        if (not self.ended) or override_ended:
-            self.ended = True
+        if (not self.state == 2) or override_ended:
+            self.state = 2
             print('.' * self.header_len)
             self.print_stats(extra_dict)
             print('.' * self.header_len)
