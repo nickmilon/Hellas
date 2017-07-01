@@ -78,7 +78,15 @@ def distance_points(point1, point2, earth_radius=6367000):
         342.55
     """
     return haversine(point1[0], point1[1], point2[0], point2[1])
-    
+
+
+def dms2dd(degrees, minutes, seconds, direction):
+    """convert degrees, minutes, seconds to dd
+    :param string direction: one of N S W E
+    """
+    dd = (degrees + minutes/60.0) + (seconds/3600.0)           # 60.0 fraction for python 2+ compatibility
+    return dd * -1 if direction == 'S' or direction == 'W' else dd
+
 
 #   some bit wise operations see: https://wiki.python.org/moin/BitManipulation
 

@@ -30,8 +30,8 @@ def format_header(frmt, return_len=False):
     """
     names = re.sub("{(.*?):.*?}", r"\1", frmt)
     names = [i for i in names.split("|") if i]
-    frmt_clean = re.sub("\.\df", r"", frmt)  # get read of floats i.e {:8.2f}
-    sizes = re.findall(r'\d+', frmt_clean)
+    frmt_clean = re.sub("\.\df", r"", frmt)                 # get read of floats i.e {:8.2f}
+    sizes = re.findall(r':(\d+)', frmt_clean)
     frmt_header = "|{{:^{}}}" * len(sizes) + "|"
     header_frmt = frmt_header.format(*sizes)
     header = header_frmt.format(*names)
@@ -162,7 +162,7 @@ class Progress(object):
             perc = (self._dict.operations / float(self.max_count))
             self._dict.percent = 100 * perc
             self._dict.per_sec = 0 if self._dict.operations < 10 else int(self._dict.operations / (self.dt_last_print - self.dt_start).total_seconds())
-            self._dict.ETA = seconds_to_DHMS((elapsed * (1 / perc)) - elapsed)
+            self._dict.ETA = seconds_to_DHMS((elapsed * (1 / (perc if perc > 0 else 1))) - elapsed)
         print(self._frmt.format(**self._dict))
         if self._dict.operations == self.max_count:
                 self.print_end()
